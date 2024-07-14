@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import CreateDepartmentForm from './departments/components/CreateDepartmentForm';
+import { OrgChart } from 'd3-org-chart';
+import { OrgChartComponent } from './departments/components/OrgChart';
 
 interface Employee {
     id: string;
@@ -151,8 +153,8 @@ export default function App() {
         ]
     })
 
-    const [isCreateDialogOpen,setIsCreateDialogOpen] = useState()
-    const [departments,setDepartments] = useState([])
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState()
+    const [departments, setDepartments] = useState([])
     function getHierarchy() {
         departmentService.getHierarchy().then(response => {
             setOrganizationData(response.data[0])
@@ -171,11 +173,27 @@ export default function App() {
         getHierarchy()
         listDepartments()
     }, [])
+    function onNodeClick(nodeId: any) {
+        // console.log('d3', d3.event);
+        alert('clicked ' + nodeId);
+    }
+    let addNodeChildFunc: any = null;
+
+    function addNode() {
+        const node = {
+            nodeId: 'new Node',
+            parentNodeId: 'O-6066',
+        };
+
+        addNodeChildFunc(node);
+    }
 
     return <>
-        <OrganizationHierarchy data={organizationData} />;
+        <OrgChartComponent data={departments} setClick={(click: any) => (addNodeChildFunc = click)}
+            onNodeClick={onNodeClick} />
+        {/* <OrganizationHierarchy data={organizationData} />;
         <div className='fixed bottom-16 right-16'>
         <CreateDepartmentForm open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} departments={departments} />
-        </div>
+        </div> */}
     </>
 }

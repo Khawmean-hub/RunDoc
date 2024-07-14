@@ -16,7 +16,7 @@ interface User {
 function deleteUser(id:string){
     return ihttp.delete(`/api/admin/users/${id}`)
 }
-function addUser(user: User) {
+function addUser(user: any) {
     return ihttp.post('/api/admin/users', user);
 }
 

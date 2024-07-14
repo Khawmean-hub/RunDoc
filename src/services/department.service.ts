@@ -4,7 +4,9 @@ export const departmentService = {
     list,
     create,
     getUsers,
-    getHierarchy
+    getHierarchy,
+    delete:_delete,
+    update
 }
 
 function list() {
@@ -23,4 +25,11 @@ function getUsers(departmentId:string){
 
 function getHierarchy(){
     return ihttp.get(`/api/departments/all/with-children`)
+}
+function _delete(id:string){
+    return ihttp.delete(`/api/departments/${id}`)
+}
+
+function update(id:string,data:any){
+    return ihttp.put(`/api/departments/${id}`,data)
 }

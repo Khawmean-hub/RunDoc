@@ -1,30 +1,36 @@
-// app/auth/login/page.tsx
-"use client";
-
-import { useEffect, useState } from 'react';
-import { signInWithCustomToken, signInWithEmailAndPassword } from 'firebase/auth';
-
+"use client"
+import React, { useEffect, useState } from 'react';
+import { signInWithCustomToken } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthProvider';
 import { auth } from '@/app/lib/firebase/config';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { user } = useAuth();
 
-    const { user, logout } = useAuth();
     useEffect(() => {
         if (user) {
             router.push('/');
         }
-    }, [])
+    }, [user, router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError(null);
+
         try {
-            const response = await fetch('http://128.199.209.22:8080/api/auth/login', {
+            const response = await fetch('http://localhost:8080/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -34,7 +40,8 @@ export default function LoginPage() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to log in');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to log in');
             }
 
             const data = await response.json();
@@ -44,41 +51,64 @@ export default function LoginPage() {
             router.push('/');
         } catch (error: any) {
             setError(error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-100">
-            <div className="w-full max-w-md p-8 bg-white shadow-md rounded-lg">
-                <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        Login
-                    </button>
-                </form>
-                {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-            </div>
+        <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <Card className="w-full max-w-md">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
+                    <CardDescription className="text-center">
+                        Enter your email and password to access your account
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div className="space-y-2">
+                            <Input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                                required
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Logging in...
+                                </>
+                            ) : (
+                                'Login'
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+                <CardFooter>
+                    {error && (
+                        <Alert variant="destructive" className="mt-4 w-full">
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+                </CardFooter>
+            </Card>
         </div>
     );
 }
