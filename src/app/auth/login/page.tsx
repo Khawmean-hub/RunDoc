@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+const baseURL = `${process.env.NEXT_PUBLIC_API_BASE_URL}`
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -30,7 +31,7 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            const response = await fetch(`${baseURL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
