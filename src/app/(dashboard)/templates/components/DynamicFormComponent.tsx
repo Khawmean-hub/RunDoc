@@ -1,6 +1,6 @@
 "use client"
 import { v4 as uuidv4 } from 'uuid';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -11,8 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@headlessui/react';
-import Teams from './Teams';
-import UserSelectionModal from './UserSelectDialog';
 
 type QuestionType = 'shortAnswer' | 'paragraph' | 'multipleChoice' | 'checkbox' | 'dropdown' | 'section';
 
@@ -32,13 +30,30 @@ interface RunDocForm {
     questions: Question[];
 }
 
-export default function FunDocFormComponent() {
+interface DynamicFormComponentProps {
+    onFormChange: (form: RunDocForm) => void;
+}
+
+
+export default function DynamicFormComponent({ onFormChange }: DynamicFormComponentProps) {
     const [form, setForm] = useState<RunDocForm>({
         id: uuidv4(),
         title: 'Untitled Form',
         description: '',
         questions: []
     });
+
+    useEffect(() => {
+        onFormChange(form);
+    }, [form, onFormChange]);
+
+    const updateForm = (updates: Partial<RunDocForm>) => {
+        setForm(prev => {
+            const newForm = { ...prev, ...updates };
+            return newForm;
+        });
+    };
+
 
     const [activeQuestion, setActiveQuestion] = useState<string | null>(null);
 
@@ -52,24 +67,22 @@ export default function FunDocFormComponent() {
                 ? [{ id: uuidv4(), value: 'Option 1' }]
                 : undefined
         };
-        setForm(prev => ({ ...prev, questions: [...prev.questions, newQuestion] }));
+        updateForm({ questions: [...form.questions, newQuestion] });
         setActiveQuestion(newQuestion.id);
     };
 
     const updateQuestion = (questionId: string, updates: Partial<Question>) => {
-        setForm(prev => ({
-            ...prev,
-            questions: prev.questions.map(q =>
+        updateForm({
+            questions: form.questions.map(q =>
                 q.id === questionId ? { ...q, ...updates } : q
             )
-        }));
+        });
     };
 
     const deleteQuestion = (questionId: string) => {
-        setForm(prev => ({
-            ...prev,
-            questions: prev.questions.filter(q => q.id !== questionId)
-        }));
+        updateForm({
+            questions: form.questions.filter(q => q.id !== questionId)
+        });
         if (activeQuestion === questionId) {
             setActiveQuestion(null);
         }
@@ -79,10 +92,9 @@ export default function FunDocFormComponent() {
         const questionToDuplicate = form.questions.find(q => q.id === questionId);
         if (questionToDuplicate) {
             const newQuestion = { ...questionToDuplicate, id: uuidv4() };
-            setForm(prev => ({
-                ...prev,
-                questions: [...prev.questions, newQuestion]
-            }));
+            updateForm({
+                questions: [...form.questions, newQuestion]
+            });
             setActiveQuestion(newQuestion.id);
         }
     };
@@ -93,41 +105,38 @@ export default function FunDocFormComponent() {
             const newQuestions = [...form.questions];
             const [removed] = newQuestions.splice(index, 1);
             newQuestions.splice(direction === 'up' ? index - 1 : index + 1, 0, removed);
-            setForm(prev => ({ ...prev, questions: newQuestions }));
+            updateForm({ questions: newQuestions });
         }
     };
 
     const addOption = (questionId: string) => {
-        setForm(prev => ({
-            ...prev,
-            questions: prev.questions.map(q =>
+        updateForm({
+            questions: form.questions.map(q =>
                 q.id === questionId
                     ? { ...q, options: [...(q.options || []), { id: uuidv4(), value: `Option ${(q.options?.length || 0) + 1}` }] }
                     : q
             )
-        }));
+        });
     };
 
     const updateOption = (questionId: string, optionId: string, value: string) => {
-        setForm(prev => ({
-            ...prev,
-            questions: prev.questions.map(q =>
+        updateForm({
+            questions: form.questions.map(q =>
                 q.id === questionId
                     ? { ...q, options: q.options?.map(o => o.id === optionId ? { ...o, value } : o) }
                     : q
             )
-        }));
+        });
     };
 
     const deleteOption = (questionId: string, optionId: string) => {
-        setForm(prev => ({
-            ...prev,
-            questions: prev.questions.map(q =>
+        updateForm({
+            questions: form.questions.map(q =>
                 q.id === questionId
                     ? { ...q, options: q.options?.filter(o => o.id !== optionId) }
                     : q
             )
-        }));
+        });
     };
 
 
@@ -287,121 +296,103 @@ export default function FunDocFormComponent() {
 
     return (
         <>
-            <div className="flex max-h-16 items-center p-6 border-b bg-white z-10" >
-                <h6 className="font-medium text-xl">New Template</h6>
-                <div className="ml-auto"></div>
-                <div className="flex gap-2">
-                    <Button variant={'secondary'} onClick={() => {
-                    }}>
-                        Cancel
-                    </Button>
-                    <Button variant={'default'}>
-                        Create
-                    </Button>
-                </div>
+            <div className="absolute right-5 top-10 flex flex-col space-y-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('shortAnswer')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <MessageSquare className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Short Answer</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('paragraph')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <AlignLeft className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Paragraph</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('multipleChoice')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <List className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Multiple Choice</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('checkbox')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <CheckSquare className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Checkbox</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('dropdown')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <ChevronDown className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Dropdown</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={() => addQuestion('section')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
+                                <MoreVertical className="h-5 w-5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                            <p>Section</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
-
-            <div className='grid grid-cols-2'>
-                <ScrollArea className="rounded-md border max-h-[calc(100vh-4rem)] relative border-none">
-                    <div className="absolute right-5 top-10 flex flex-col space-y-2">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('shortAnswer')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <MessageSquare className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Short Answer</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('paragraph')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <AlignLeft className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Paragraph</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('multipleChoice')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <List className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Multiple Choice</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('checkbox')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <CheckSquare className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Checkbox</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('dropdown')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <ChevronDown className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Dropdown</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button onClick={() => addQuestion('section')} className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105">
-                                        <MoreVertical className="h-5 w-5" />
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                    <p>Section</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                    <div className="flex p-6">
-                        <div className="flex-1 p-8 overflow-auto mr-10">
-                            <Card className="mb-6">
-                                <CardContent className="p-4">
-                                    <Input
-                                        value={form.title}
-                                        onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
-                                        className="text-3xl font-bold mb-2"
-                                        placeholder="Form Title"
-                                    />
-                                    <Textarea
-                                        value={form.description || ''}
-                                        onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                                        placeholder="Form Description"
-                                        className="text-gray-600"
-                                    />
-                                </CardContent>
-                            </Card>
-                            {form.questions.map(renderQuestionEditor)}
-                            <Button onClick={() => console.log(JSON.stringify(form, null, 2))} className="mt-4">
-                                Save Form
-                            </Button>
-                        </div>
-                    </div>
-                </ScrollArea>
+            <div className="flex p-6">
+                <div className="flex-1 p-8 overflow-auto mr-10">
+                    <Card className="mb-6">
+                        <CardContent className="p-4">
+                            <Input
+                                value={form.title}
+                                onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
+                                className="text-3xl font-bold mb-2"
+                                placeholder="Form Title"
+                            />
+                            <Textarea
+                                value={form.description || ''}
+                                onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder="Form Description"
+                                className="text-gray-600"
+                            />
+                        </CardContent>
+                    </Card>
+                    {form.questions.map(renderQuestionEditor)}
+                    {/* <Button onClick={() => console.log(JSON.stringify(form, null, 2))} className="mt-4">
+                        Save Form
+                    </Button> */}
+                </div>
             </div>
         </>
     );

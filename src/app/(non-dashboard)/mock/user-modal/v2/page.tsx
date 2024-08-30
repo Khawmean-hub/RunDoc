@@ -64,7 +64,7 @@ export default function AddUserToLevelModal() {
                                         <div className="grid gap-4">
                                             {selectedUsers.map(user => {
                                                 if(!selectedDepartments.map(department=>department.id).includes(user.department?.id)){
-                                                    return <UserComponent user={user} onRemoveUser={(id: string) => {
+                                                    return <UserComponent key={user?.id} user={user} onRemoveUser={(id: string) => {
                                                         setSelectedUsers(selectedUsers.filter(user => {
                                                             return user.id != id
                                                         }))
@@ -84,7 +84,7 @@ export default function AddUserToLevelModal() {
                                         <h4 className="text-sm font-medium">Selected Departments</h4>
                                         <div className="grid gap-1">
                                             {selectedDepartments.map(department => {
-                                                return <DepartmentComponent department={department} onRemoveDepartment={(id: string) => {
+                                                return <DepartmentComponent key={department?.id} department={department} onRemoveDepartment={(id: string) => {
                                                     setSelectedDepartments(selectedDepartments.filter(department => {
                                                         return department.id != id
                                                     }))

@@ -34,7 +34,7 @@ export default function DepartmentListPage() {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Departments</CardTitle>
-            <CardDescription>Manage your organization's departments</CardDescription>
+            <CardDescription>Manage your organization&apos;s departments</CardDescription>
           </div>
           <CreateDepartmentForm open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
         </div>

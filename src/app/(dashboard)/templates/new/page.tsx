@@ -1,16 +1,13 @@
+"use client"
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import UserSelectionDialog from './UserSelectionDialog';
-import DynamicFormComponent from "./DynamicFormComponent";
+import UserSelectionDialog from '../components/UserSelectionDialog';
+import DynamicFormComponent from '../components/DynamicFormComponent';
+import { documentTemplateService } from '@/services';
+
 
 interface UserData {
     id: string;
@@ -25,10 +22,62 @@ interface Team {
     members: UserData[];
 }
 
-export default function TemplateCreateDialog() {
-    const [open, setOpen] = useState(false);
+interface Question {
+    id: string;
+    type: 'shortAnswer' | 'paragraph' | 'multipleChoice' | 'checkbox' | 'dropdown' | 'section';
+    title: string;
+    required: boolean;
+    description?: string;
+    options?: { id: string; value: string }[];
+}
+
+interface RunDocForm {
+    id: string;
+    title: string;
+    description?: string;
+    questions: Question[];
+}
+
+export default function TemplateCreatePage() {
+    const [formData, setFormData] = useState<RunDocForm | null>(null);
     const [teams, setTeams] = useState<Team[]>([]);
 
+
+    const handleCreateTemplate = async () => {
+        if (!formData) {
+            console.error('Form data is missing');
+            return;
+        }
+
+        const templateData = {
+            title: formData.title,
+            levels: teams.map((team, index) => ({
+                name: team.name,
+                level_number: index,
+                users: team.members.map(member => ({
+                    id: member.id,
+                    username: member.username,
+                    email: member.email,
+                })),
+                departments: [], // Assuming no department data is available in the current implementation
+                remark: ''
+            })),
+            form_data: formData
+        };
+
+        try {
+            const response = await documentTemplateService.create(templateData);
+            alert('Template created successfully:'+response);
+            // Handle successful creation (e.g., show a success message, redirect to template list)
+        } catch (error) {
+            alert('Error creating template:'+ error);
+            // Handle error (e.g., show an error message to the user)
+        }
+    };
+
+    const handleFormDataChange = (newFormData: RunDocForm) => {
+        setFormData(newFormData);
+    };
     const handleAddMembers = (teamId: number, selectedUsers: UserData[]) => {
         setTeams(
             teams.map((team) =>
@@ -62,30 +111,25 @@ export default function TemplateCreateDialog() {
     };
 
     return (
-        <Dialog modal={true} open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="default" size="icon" className='rounded-full h-12 w-12'>
-                    <Plus />
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 flex flex-col h-[95vh]">
-                <DialogHeader className="flex flex-row justify-between items-center p-6 border-b bg-white">
-                    <h6 className="font-medium text-xl">New Template</h6>
+        <>
+            <div className="container mx-auto p-6">
+                <header className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold">New Template</h1>
                     <div className="flex gap-2">
-                        <Button variant={'secondary'} onClick={() => setOpen(false)}>
+                        <Button variant={'secondary'} onClick={() => window.history.back()}>
                             Cancel
                         </Button>
-                        <Button variant={'default'}>
+                        <Button variant={'default'} onClick={handleCreateTemplate}>
                             Create
                         </Button>
                     </div>
-                </DialogHeader>
-                <div className="overflow-hidden grid grid-cols-2">
-                    <ScrollArea>
-                        <DynamicFormComponent />
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ScrollArea className="h-[calc(100vh-200px)]">
+                        <DynamicFormComponent onFormChange={handleFormDataChange} />
                     </ScrollArea>
-                    <ScrollArea>
-                        <div className="p-6 space-y-4">
+                    <ScrollArea className="h-[calc(100vh-200px)]">
+                        <div className="space-y-4">
                             <h2 className="font-medium text-lg">Participants</h2>
                             {teams.map((team) => (
                                 <div key={team.id} className="bg-white rounded-lg border p-4">
@@ -139,7 +183,7 @@ export default function TemplateCreateDialog() {
                         </div>
                     </ScrollArea>
                 </div>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </>
     );
 }

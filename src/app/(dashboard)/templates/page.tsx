@@ -43,17 +43,17 @@ export default function DocumentTemplates() {
         <TemplateTypeDialog/>
       </div>
       <div className='fixed bottom-16 right-16'>
-        <TemplateCreateDialog/>
+        {/* <TemplateCreateDialog/> */}
         {/* <TeamManagementDialog/> */}
-        {/* <Button variant="default" size="icon" className='rounded-full h-12 w-12' onClick={() => {
+        <Button variant="default" size="icon" className='rounded-full h-12 w-12' onClick={() => {
           router.push('/templates/new')
         }}>
           <Plus />
-        </Button> */}
+        </Button>
       </div>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {templates.map(((template: any) => {
-          return <TemplateComponent template={template} />
+          return <TemplateComponent key={template?.id} template={template} />
         }))}
       </div>
     </div>

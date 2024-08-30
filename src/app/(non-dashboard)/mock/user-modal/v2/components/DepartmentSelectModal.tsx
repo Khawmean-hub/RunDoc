@@ -117,7 +117,7 @@ export default function DepartmentSelectModal({
                     {selectedDepartments.length > 0 ? (
                         <div className="flex -space-x-2 overflow-hidden gap-4">
                             {selectedDepartments.map((department: any) => (
-                                <div className="flex items-center p-2 border gap-1 rounded-sm border-blue-500 text-sm">
+                                <div key={department?.id} className="flex items-center p-2 border gap-1 rounded-sm border-blue-500 text-sm">
                                     <BuildingOfficeIcon className="h-5 w-5 text-blue-500"/>
                                     {department.name}
                                     <p className="text-xs text-muted-foreground">Users {department.usersCount}</p>

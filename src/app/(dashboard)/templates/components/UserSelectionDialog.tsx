@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { X, ChevronRight, ChevronDown, Search, User } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Search, User, PlusCircle } from 'lucide-react';
 import { departmentService, userService } from '@/services';
 
 interface Department {
@@ -28,7 +28,11 @@ interface UserData {
   profilePictureUrl: string | null;
 }
 
-const UserSelectionDialog: React.FC = () => {
+interface UserSelectionDialogProps {
+  onConfirm: (selectedUsers: UserData[]) => void;
+}
+
+const UserSelectionDialog: React.FC<UserSelectionDialogProps> = ({ onConfirm }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDepartments, setExpandedDepartments] = useState<string[]>(['668f8ca43723312e5d89fc7a']);
@@ -89,6 +93,17 @@ const UserSelectionDialog: React.FC = () => {
     setSelectedUsers(allUserIds);
   };
 
+  const handleConfirm = () => {
+    const selectedUserData = users.filter(user => selectedUsers.includes(user.id));
+    onConfirm(selectedUserData);
+
+    // Create an alert message
+    const alertMessage = selectedUserData.map(user => `${user.username} (${user.email})`).join('\n');
+    alert(`Selected Users:\n${alertMessage}`);
+
+    setIsOpen(false);
+  };
+
   const renderDepartment = (dept: Department, level: number = 0) => {
     const childDepartments = departments.filter(d => d.parentId === dept.id);
     const isExpanded = expandedDepartments.includes(dept.id);
@@ -134,7 +149,7 @@ const UserSelectionDialog: React.FC = () => {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} className="bg-gray-600 text-white hover:bg-gray-700 text-sm">Open User Selection</Button>
+      <Button onClick={() => setIsOpen(true)} className="text-sm" variant={'ghost'} size={'icon'}><PlusCircle/></Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
           <DialogHeader className="px-6 py-4 bg-gray-50 border-b">
@@ -249,10 +264,7 @@ const UserSelectionDialog: React.FC = () => {
           </div>
           <div className="px-6 py-4 bg-gray-50 border-t flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button variant={'default'} onClick={() => {
-              console.log('Selected users:', selectedUsers.map(id => users.find(u => u.id === id)));
-              setIsOpen(false);
-            }}>Apply ({selectedUsers.length})</Button>
+            <Button variant={'default'} onClick={handleConfirm}>Confirm ({selectedUsers.length})</Button>
           </div>
         </DialogContent>
       </Dialog>
